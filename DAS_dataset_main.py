@@ -6,23 +6,24 @@ from models.HDAS_file_convert import sampling_file_name, HDAS_meas_settings, rea
 from models.Obspy_processing  import create_stream, ram_normalization, show_sort_plot, show_fft
 from models.ASDF_file_convert import write_to_h5
 from models.User_print        import print_header, print_small_header, print_update
+from models.Spectrogram_plot  import plot_spectrogram
 
 #############################################################################################
 
-Name          = 'Madeira'                   # Project Name
-raw_data_file = './/Madeira//Data'          # Raw data files path
+Name          = 'Faial Dia 9'                   # Project Name
+raw_data_file = raw_data_file = 'D:\\DAS_FAIAL\\13_01_24 Parte 2\\ProcessedData' # Raw data files path
 
-stop          = 1000                        # Total number of channels to be loaded
-select        = [37, 173, 460, 580, 756]    # Selection of channels to monitor
+stop          = 4992                        # Total number of channels to be loaded
+select        = [123,356,756,1258,2348,3584,4991]    # Selection of channels to monitor
 
 window_norm   = 10.0                        # running average window for time-domain normalization [s]
-band_freq     = [0.01, 0.2]                 # Band pass filter [f_cut_min, f_cut_high] [Hz]
+band_freq     = [0.01, 1.0]                 # Band pass filter [f_cut_min, f_cut_high] [Hz]
 
 # Metadata
-start_time = '2025-01-01'                   # Starting time
-station    = 'MAD'                          # Station Name
+start_time = '2025-11-01'                   # Starting time
+station    = 'FAIAL'                          # Station Name
 network    = 'MODAS'                        # Network Name
-location   = 'MAD'                          # Location Name
+location   = 'FAIAL'                          # Location Name
 
 #############################################################################################
 # Step 0. Find Data
@@ -101,10 +102,18 @@ show_fft(st_monitor)        # Uncomment to plot filtered data spectrum
 show_sort_plot(st_monitor)  # Uncomment to plot filtered data
 
 print_update('Normalize data')
-stream     = ram_normalization(stream, window_norm)
-st_monitor = ram_normalization(st_monitor, window_norm)
+stream_normalized     = ram_normalization(stream, window_norm)
+st_monitor_normalized = ram_normalization(st_monitor, window_norm)
 
-show_sort_plot(st_monitor)  # Uncomment to print normalized data
+show_sort_plot(st_monitor_normalized)  # Uncomment to print normalized data
 
-print_update('saving ASDF data')
-write_to_h5(stream, 'DAS_SSprocess.h5')
+# Assuming `select` and `st_monitor` are defined elsewhere in your code
+print_small_header('Generating spectrograms for selected channels')
+
+for i in range(len(select)):
+    chan_name = st_monitor.traces[i].stats.channel
+    print_update(f'Processing spectrogram for channel {chan_name}')
+    plot_spectrogram(st_monitor, channel_index=i, fs=frequency_sample)
+
+#print_update('saving ASDF data')
+#write_to_h5(stream, 'DAS_SSprocess.h5')

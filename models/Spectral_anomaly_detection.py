@@ -1,21 +1,6 @@
 import numpy as np
 
 def detect_entropy_anomalies(Sxx_anomalies, t_anomalies, M_test, upper_percentile=95, lower_percentile=5):
-    """
-    Detects anomalies in a spectrogram using spectral entropy thresholds.
-
-    Parameters:
-        Sxx_anomalies (ndarray): Spectrogram (frequencies x time).
-        t_anomalies (ndarray): Time values corresponding to the spectrogram (in seconds).
-        M_test (ndarray): Time axis (e.g., in minutes) used for identifying anomaly regions.
-        upper_percentile (float): Percentile to define upper threshold.
-        lower_percentile (float): Percentile to define lower threshold.
-
-    Returns:
-        anomaly_indices (ndarray): Indices in `M_test` identified as anomalies.
-        anomaly_mask (ndarray): Boolean mask marking anomalous regions in `M_test`.
-        crossings (list): List of (start_time, end_time) tuples (in seconds) for detected anomalies.
-    """
     # Compute entropy across frequencies
     entropy = -np.sum(Sxx_anomalies * np.log(Sxx_anomalies + 1e-10), axis=0)
 

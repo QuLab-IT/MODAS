@@ -6,10 +6,7 @@ import matplotlib.dates as mdates
 
 def plot_spectrogram(stream, channel_index, fs, nperseg=256, cmap='Spectral_r',
                      start_time=None, time_window=None, freq_limit=20):
-    """
-    time_window: tuple of (start_time_offset, end_time_offset) in seconds
-    freq_limit: max frequency to display in Hz
-    """
+    
     trace = stream.traces[channel_index]
     signal = trace.data
 
@@ -60,3 +57,5 @@ def plot_spectrogram(stream, channel_index, fs, nperseg=256, cmap='Spectral_r',
     plt.ylabel("Frequency (Hz)")
     plt.tight_layout()
     plt.show()
+
+    return Sxx, f, t

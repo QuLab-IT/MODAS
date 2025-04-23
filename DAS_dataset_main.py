@@ -9,6 +9,7 @@ from models.User_print        import print_header, print_small_header, print_upd
 from models.Spectrogram_plot  import plot_spectrogram
 from models.Spacial_spectrogram import plot_spatial_spectrogram
 from models.Event_analyzer import analyze_event_dynamics
+from models.Feature_extraction_ML import extract_spectrogram_features
 from datetime import datetime
 
 #############################################################################################
@@ -127,7 +128,7 @@ st_monitor.filter("bandpass", freqmin=band_freq[0], freqmax=band_freq[1], corner
 
 #############################################################################################
 # Step 3. Analysis in Frequency Spectrum
-print_small_header('Generating spectrograms for selected channels') 
+print_header('Generating spectrograms for selected channels') 
 
 print_update('Converting time to object')
 
@@ -137,27 +138,62 @@ for i in range(len(select)):
     chan_name = st_monitor.traces[i].stats.channel
     print_update(f'Processing spectrogram for channel {chan_name}')
     # time_window: tuple of (start_time_offset, end_time_offset) in seconds
-    plot_spectrogram(st_monitor, channel_index=i, fs=frequency_sample, start_time=start_datetime, time_window=(18900, 19800))
+    Sxx, f, t = plot_spectrogram(st_monitor, channel_index=i, fs=frequency_sample, start_time=start_datetime, time_window=(18900, 19800))
 
 
 # Add spatial spectrum analysis for each selected channel
-print_update(f'Generating spatial spectrogram for all channels')
+print_header('Generating spatial spectrogram for all channels')
 
 plot_spatial_spectrogram(stream=st_monitor_spatial, time_window=(0, 43218), fs=frequency_sample, spatial_sample=spatial_sample, window_size=32, overlap=0.9)
 
 # Example usage for analyzing the event dynamics
 channel_to_analyze = 87       # can be any channel
 
-print_update("Analyzing event signal dynamics...")
-analyze_event_dynamics(
-    stream=st_monitor,
-    fs=frequency_sample,
-    time_window=(18900, 19800),
-    n_segments=10,
-    channel_index=channel_to_analyze,
-    fit_pdf=False
-)
+#print_update("Analyzing event signal dynamics...")
+#analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(18900, 19800), n_segments=10, channel_index=channel_to_analyze, fit_pdf=False)
 
+# Extract the date part from start_time
+start_datetime = datetime.strptime(start_time, '%Y-%m-%d-%H-%M-%S')
+date_str = start_datetime.strftime('%Y-%m-%d')  # Extracting the date in YYYY-MM-DD format
+
+# Create output folder
+output_folder = 'saved_spectrograms'
+os.makedirs(output_folder, exist_ok=True)
+
+print_header('Generating spectrograms and extracting features for selected channels')
+
+print_update('Converting time to object')
+
+all_features = {}
+
+for i in range(len(select)):
+    chan_name = st_monitor.traces[i].stats.channel
+    print_update(f'Processing spectrogram and extracting features for channel {chan_name}')
+
+    # Compute spectrogram
+    Sxx, f, t = plot_spectrogram(
+        st_monitor,
+        channel_index=i,
+        fs=frequency_sample,
+        start_time=start_datetime,
+        time_window=(18900, 19800)
+    )
+
+    # Save files with the date in the filename
+    np.save(os.path.join(output_folder, f"{chan_name}_{date_str}_Sxx.npy"), Sxx)
+    np.save(os.path.join(output_folder, f"{chan_name}_{date_str}_f.npy"), f)
+    np.save(os.path.join(output_folder, f"{chan_name}_{date_str}_t.npy"), t)
+
+    # Extract and save features
+    features = extract_spectrogram_features(Sxx, f, t)
+    features = {k: float(v) for k, v in features.items()}
+    all_features[chan_name] = features
+
+    print(f"\nFeature vector for channel {chan_name}:")
+    for key, value in features.items():
+        print(f"{key}: {value:.6f}")
+
+print_update(f"Saved spectrogram components for all channels in '{output_folder}'")
 
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')

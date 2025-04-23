@@ -156,9 +156,11 @@ channel_to_analyze = 87       # can be any channel
 start_datetime = datetime.strptime(start_time, '%Y-%m-%d-%H-%M-%S')
 date_str = start_datetime.strftime('%Y-%m-%d')  # Extracting the date in YYYY-MM-DD format
 
-# Create output folder
-output_folder = 'saved_spectrograms'
-os.makedirs(output_folder, exist_ok=True)
+# Create output folders for spectrograms and features
+output_folder_spectrograms = 'saved_spectrograms'
+output_folder_features = 'saved_features'
+os.makedirs(output_folder_spectrograms, exist_ok=True)
+os.makedirs(output_folder_features, exist_ok=True)
 
 print_header('Generating spectrograms and extracting features for selected channels')
 
@@ -179,21 +181,30 @@ for i in range(len(select)):
         time_window=(18900, 19800)
     )
 
-    # Save files with the date in the filename
-    np.save(os.path.join(output_folder, f"{chan_name}_{date_str}_Sxx.npy"), Sxx)
-    np.save(os.path.join(output_folder, f"{chan_name}_{date_str}_f.npy"), f)
-    np.save(os.path.join(output_folder, f"{chan_name}_{date_str}_t.npy"), t)
+    # Save spectrogram data with the date in the filename
+    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"), Sxx)
+    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"), f)
+    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"), t)
 
-    # Extract and save features
+    # Extract features from the spectrogram
     features = extract_spectrogram_features(Sxx, f, t)
     features = {k: float(v) for k, v in features.items()}
     all_features[chan_name] = features
 
+    # Save features in the features folder
+    feature_file_path = os.path.join(output_folder_features, f"{chan_name}_{date_str}_features.npy")
+    np.save(feature_file_path, features)
+
+    # Print the feature vector
     print(f"\nFeature vector for channel {chan_name}:")
     for key, value in features.items():
         print(f"{key}: {value:.6f}")
 
-print_update(f"Saved spectrogram components for all channels in '{output_folder}'")
+    # Optionally, delete the spectrogram files to save space
+    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"))
+    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"))
+    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"))
 
+print_update(f"Saved features for all channels in '{output_folder_features}'")
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')

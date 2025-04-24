@@ -1,16 +1,16 @@
 import numpy as np
 import os
 
-from obspy                    import Stream
-from models.HDAS_file_convert import sampling_file_name, HDAS_meas_settings, read_bin_file
-from models.Obspy_processing  import create_stream, ram_normalization, show_sort_plot, show_fft
-from models.ASDF_file_convert import write_to_h5
-from models.User_print        import print_header, print_small_header, print_update
-from models.Spectrogram_plot  import plot_spectrogram
-from models.Spacial_spectrogram import plot_spatial_spectrogram
-from models.Event_analyzer import analyze_event_dynamics
-from models.Feature_extraction_ML import extract_spectrogram_features
-from datetime import datetime
+from obspy                              import Stream
+from models.HDAS_file_convert           import sampling_file_name, HDAS_meas_settings, read_bin_file
+from models.Obspy_processing            import create_stream, ram_normalization, show_sort_plot, show_fft
+from models.ASDF_file_convert           import write_to_h5
+from models.User_print                  import print_header, print_small_header, print_update
+from models.Spectrogram_plot            import plot_spectrogram
+from models.Spacial_spectrogram         import plot_spatial_spectrogram
+from models.Event_analyzer              import analyze_event_dynamics
+from models.Feature_extraction_ML       import extract_spectrogram_features
+from datetime                           import datetime
 
 #############################################################################################
 
@@ -24,19 +24,19 @@ else:
 
 # Channel range to load
 start_channel = 2000
-stop_channel  = 2500
-channel_range = list(range(start_channel, stop_channel + 1))  # all channels
-select        = [87, 158, 199]  # selecting all of them for monitoring
-select_spatial = list(range(len(channel_range)))
+stop_channel  = 2600
+channel_range = list(range(start_channel, stop_channel + 1))    # all channels
+select        = [87, 158, 199]                                  # selecting which ones to monitor
+select_spatial = list(range(len(channel_range)))                #all channels for spatial spectrogram
 
-window_norm   = 10.0                        # running average window for time-domain normalization [s]
-band_freq     = [0.01, 10.0]                 # Band pass filter [f_cut_min, f_cut_high] [Hz]
+window_norm   = 10.0                                            # running average window for time-domain normalization [s]
+band_freq     = [0.01, 10.0]                                    # Band pass filter [f_cut_min, f_cut_high] [Hz]
 
 # Metadata
-start_time = '2025-01-20-12-00-07'                   # Starting time
-station    = 'FAIAL'                          # Station Name
-network    = 'MODAS'                        # Network Name
-location   = 'FAIAL'                          # Location Name
+start_time = '2025-01-20-12-00-07'                              # Starting time ('%Year-%month-%day-%Hour-%Minutes-%Seconds')
+station    = 'FAIAL'                                            # Station Name
+network    = 'MODAS'                                            # Network Name
+location   = 'FAIAL'                                            # Location Name
 
 #############################################################################################
 # Step 0. Find Data
@@ -196,7 +196,7 @@ for i in range(len(select)):
     np.save(feature_file_path, features)
 
     # Print the feature vector
-    print(f"\nFeature vector for channel {chan_name}:")
+    print(f"\nFeature vector for channel {chan_name} ({len(features)} features):")
     for key, value in features.items():
         print(f"{key}: {value:.6f}")
 

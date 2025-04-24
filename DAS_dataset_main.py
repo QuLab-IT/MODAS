@@ -10,21 +10,28 @@ from models.Spectrogram_plot            import plot_spectrogram
 from models.Spacial_spectrogram         import plot_spatial_spectrogram
 from models.Event_analyzer              import analyze_event_dynamics
 from models.Feature_extraction_ML       import extract_spectrogram_features
+from models.Spectrogram_data            import data_spectrogram
 from datetime                           import datetime
+import time 
 
 #############################################################################################
 
 Name          = 'Faial Dia 20'                   # Project Name
-raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData'
+
+#When in MODAS PC
+#raw_data_file = raw_data_file = 'D:\\DAS_FAIAL\\13_01_24 Parte 2\\ProcessedData' # Comment when not in MODAS
+
+#When in Dinis PC
+raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
 
 if os.path.exists(raw_data_file):
-    print("Found the folder! ✅")
+    print("Found the folder!")
 else:
-    print("Path not found. ❌")
+    print("Path not found.")
 
 # Channel range to load
 start_channel = 2000
-stop_channel  = 2600
+stop_channel  = 2200
 channel_range = list(range(start_channel, stop_channel + 1))    # all channels
 select        = [87, 158, 199]                                  # selecting which ones to monitor
 select_spatial = list(range(len(channel_range)))                #all channels for spatial spectrogram
@@ -63,11 +70,12 @@ args = { 'Project name'   : Name,
          'N time samples' : n_time_samples,
          'Aquisition time': f'{aquisition_time/(60*60)} h',
          'Sampling rate'  : f'{frequency_sample} Hz' }
-print_header('DAS Raw Data converter', args)
 
+print_header('DAS Raw Data converter', args)
 
 #############################################################################################
 # Step 1. Convert data into Obspy.stream
+start = time.time()
 print_small_header('Converting the Data into a stream')
 
 raw_data_2D = np.empty((len(channel_range), n_time_samples))
@@ -88,9 +96,13 @@ stream       = create_stream(raw_data_2D, frequency_sample, start_time, len(chan
 
 # Delete previous data formats to free memory
 del FileData, raw_data_2D
+print_update(f"Step 1 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
 # Step 2. Single station analysis
+start = time.time()
+print_header('Data Treatment')
+
 print_small_header('Single station analysis')
 
 # Select channels to monitor
@@ -126,13 +138,14 @@ st_monitor.filter("bandpass", freqmin=band_freq[0], freqmax=band_freq[1], corner
 
 # show_sort_plot(st_monitor_normalized)  # Uncomment to print normalized data
 
+print_update(f"Step 2 completed in {time.time() - start:.2f} seconds")
+
 #############################################################################################
 # Step 3. Analysis in Frequency Spectrum
+start = time.time()
 print_header('Generating spectrograms for selected channels') 
 
-print_update('Converting time to object')
-
-start_datetime = datetime.strptime(start_time, '%Y-%m-%d-%H-%M-%S')
+start_datetime = datetime.strptime(start_time, '%Y-%m-%d-%H-%M-%S') #convert time to object
 
 for i in range(len(select)):
     chan_name = st_monitor.traces[i].stats.channel
@@ -140,17 +153,30 @@ for i in range(len(select)):
     # time_window: tuple of (start_time_offset, end_time_offset) in seconds
     Sxx, f, t = plot_spectrogram(st_monitor, channel_index=i, fs=frequency_sample, start_time=start_datetime, time_window=(18900, 19800))
 
-
-# Add spatial spectrum analysis for each selected channel
+print_update(f"Step 3 completed in {time.time() - start:.2f} seconds")
+#############################################################################################
+# Step 4. Spatial spectrum analysis
+start = time.time()
 print_header('Generating spatial spectrogram for all channels')
 
 plot_spatial_spectrogram(stream=st_monitor_spatial, time_window=(0, 43218), fs=frequency_sample, spatial_sample=spatial_sample, window_size=32, overlap=0.9)
 
-# Example usage for analyzing the event dynamics
-channel_to_analyze = 87       # can be any channel
+print_update(f"Step 4 completed in {time.time() - start:.2f} seconds")
 
-#print_update("Analyzing event signal dynamics...")
-#analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(18900, 19800), n_segments=10, channel_index=channel_to_analyze, fit_pdf=False)
+#############################################################################################
+# Step 5. Analyze Event to get amplitude
+print_header('Analyzing Event Signal')
+
+start = time.time()
+
+analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(18900, 19800), channel_index="CH20920m",fit_pdf=False)
+
+
+print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")
+
+#############################################################################################
+# Step 6. Feature Extraction
+start = time.time()
 
 # Extract the date part from start_time
 start_datetime = datetime.strptime(start_time, '%Y-%m-%d-%H-%M-%S')
@@ -162,7 +188,7 @@ output_folder_features = 'saved_features'
 os.makedirs(output_folder_spectrograms, exist_ok=True)
 os.makedirs(output_folder_features, exist_ok=True)
 
-print_header('Generating spectrograms and extracting features for selected channels')
+print_header('Extracting features for selected channels')
 
 print_update('Converting time to object')
 
@@ -173,15 +199,9 @@ for i in range(len(select)):
     print_update(f'Processing spectrogram and extracting features for channel {chan_name}')
 
     # Compute spectrogram
-    Sxx, f, t = plot_spectrogram(
-        st_monitor,
-        channel_index=i,
-        fs=frequency_sample,
-        start_time=start_datetime,
-        time_window=(18900, 19800)
-    )
+    Sxx, f, t = data_spectrogram(st_monitor, channel_index=i, fs=frequency_sample, start_time=start_datetime, time_window=(18900, 19800))
 
-    # Save spectrogram data with the date in the filename
+    # Save spectrogram data
     np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"), Sxx)
     np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"), f)
     np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"), t)
@@ -195,16 +215,19 @@ for i in range(len(select)):
     feature_file_path = os.path.join(output_folder_features, f"{chan_name}_{date_str}_features.npy")
     np.save(feature_file_path, features)
 
-    # Print the feature vector
+    # Print the feature vector and length
     print(f"\nFeature vector for channel {chan_name} ({len(features)} features):")
     for key, value in features.items():
         print(f"{key}: {value:.6f}")
 
-    # Optionally, delete the spectrogram files to save space
+    # Delete the spectrogram files to save space
     os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"))
     os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"))
     os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"))
 
 print_update(f"Saved features for all channels in '{output_folder_features}'")
+
+print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
+
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')

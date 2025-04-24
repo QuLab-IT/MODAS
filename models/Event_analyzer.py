@@ -4,10 +4,37 @@ from scipy.fft import fft, fftfreq
 from scipy.stats import norm
 
 def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index=0, fit_pdf=True):
-    tr = stream[channel_index]
+    print("=== DEBUG: Starting analyze_event_dynamics ===")
+    print(f"Sampling Frequency (fs): {fs}")
+    print(f"Time Window: {time_window}")
+    print(f"Number of Segments: {n_segments}")
+    print(f"Channel Identifier: {channel_index}")
+    print(f"Stream length: {len(stream)}")
+
+    # Handle channel selection
+    if isinstance(channel_index, int):
+        if channel_index < 0 or channel_index >= len(stream):
+            raise IndexError(f"channel_index {channel_index} is out of bounds for stream with {len(stream)} traces")
+        tr = stream[channel_index]
+        print(f"Selected by index → Trace ID: {tr.id}")
+    elif isinstance(channel_index, str):
+        selected = stream.select(channel=channel_index)
+        if len(selected) == 0:
+            print(f"ERROR: No trace found with channel name '{channel_index}'")
+            print("=== Available Channels in Stream ===")
+            for i, tr in enumerate(stream):
+                print(f"[{i}] ID: {tr.id}, Station: {tr.stats.station}, Channel: {tr.stats.channel}")
+            raise ValueError(f"No trace found with channel name '{channel_index}'")
+        tr = selected[0]
+        print(f"Selected by name → Trace ID: {tr.id}")
+    else:
+        raise TypeError(f"channel_index must be int or str, got {type(channel_index)}")
+
     t0, t1 = time_window
     samples = tr.data
     n_total = len(samples)
+    print(f"Number of samples in trace: {n_total}")
+
     time = np.linspace(0, n_total / fs, n_total)
 
     # Slice signal in time
@@ -22,6 +49,7 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
 
     # a) Amplitude vs Frequency (with time as a parameter)
     for i, indices in enumerate(segment_samples):
+        print(f"Segment {i+1}/{n_segments} → Time: {segment_times[i]:.1f}-{segment_times[i+1]:.1f}s, Samples: {len(indices)}")
         segment_data = samples[indices]
         fft_vals = np.abs(fft(segment_data, n=n_total))[:len(freqs_pos)]
         plt.plot(freqs_pos, fft_vals, label=f"t={segment_times[i]:.1f}-{segment_times[i+1]:.1f}s")
@@ -39,7 +67,8 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
     for indices in segment_samples:
         segment_data = samples[indices]
         fft_vals = np.abs(fft(segment_data, n=n_total))[:len(freqs_pos)]
-        dominant_freqs.append(freqs_pos[np.argmax(fft_vals)])
+        dom_freq = freqs_pos[np.argmax(fft_vals)]
+        dominant_freqs.append(dom_freq)
 
     times_centered = [(segment_times[i] + segment_times[i+1]) / 2 for i in range(n_segments)]
 
@@ -69,3 +98,5 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
         plt.grid(True)
         plt.tight_layout()
         plt.show()
+
+    print("=== DEBUG: Finished analyze_event_dynamics ===")

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import entropy, kurtosis, skew
+from scipy.stats import entropy, kurtosis, skew, linregress
 from sklearn.preprocessing import normalize
 
 def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
@@ -45,9 +45,12 @@ def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
 
     # Band energy distribution
     band_edges = np.linspace(0, len(freqs), n_bands+1, dtype=int)
+    band_energies = []
     for i in range(n_bands):
         band = Sxx[band_edges[i]:band_edges[i+1], :]
         band_mean = np.mean(band)
+        band_energy = np.sum(band)
+        band_energies.append(band_energy)
         features[f'band_{i}_mean'] = band_mean
         features[f'band_{i}_std'] = np.std(band)
         features[f'band_{i}_entropy'] = entropy(np.mean(band, axis=1) + 1e-12)
@@ -77,5 +80,40 @@ def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
     features['col_std_mean'] = np.mean(col_std)
     features['col_mean_std'] = np.std(col_mean)
     features['col_std_std'] = np.std(col_std)
+
+    # 1. Spectral Flatness
+    features['spectral_flatness'] = np.exp(np.mean(np.log(freq_stats + 1e-12))) / (np.mean(freq_stats) + 1e-12)
+
+    # 2. Spectral Spread
+    centroid = features['spectral_centroid']
+    features['spectral_spread'] = np.sqrt(np.sum(((freqs - centroid) ** 2) * freq_stats) / np.sum(freq_stats))
+
+    # 3. Temporal Flatness
+    features['temporal_flatness'] = np.exp(np.mean(np.log(time_stats + 1e-12))) / (np.mean(time_stats) + 1e-12)
+
+    # 4. Max Band Energy Ratio
+    features['max_band_energy_ratio'] = np.max(band_energies) / np.sum(Sxx)
+
+    # 5. High Frequency Content (Top 25%)
+    high_freq_band = Sxx[int(0.75 * len(freqs)):, :]
+    features['high_freq_content'] = np.sum(high_freq_band) / np.sum(Sxx)
+
+    # 6. Temporal Center of Mass
+    features['temporal_centroid'] = np.sum(times * time_stats) / np.sum(time_stats)
+
+    # 7. Spectral Roll-off (85%)
+    cumulative = np.cumsum(freq_stats)
+    roll_off_index = np.where(cumulative >= 0.85 * cumulative[-1])[0][0]
+    features['spectral_rolloff_85'] = freqs[roll_off_index]
+
+    # 8. Spectral Crest Factor
+    features['spectral_crest'] = np.max(freq_stats) / (np.mean(freq_stats) + 1e-12)
+
+    # 9. Temporal Crest Factor
+    features['temporal_crest'] = np.max(time_stats) / (np.mean(time_stats) + 1e-12)
+
+    # 10. Spectral Slope
+    slope, _, _, _, _ = linregress(freqs, freq_stats)
+    features['spectral_slope'] = slope
 
     return features

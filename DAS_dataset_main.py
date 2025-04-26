@@ -11,6 +11,7 @@ from models.Spacial_spectrogram         import plot_spatial_spectrogram
 from models.Event_analyzer              import analyze_event_dynamics
 from models.Feature_extraction_ML       import extract_spectrogram_features
 from models.Spectrogram_data            import data_spectrogram
+from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
 from datetime                           import datetime
 import time 
 
@@ -228,6 +229,18 @@ for i in range(len(select)):
 print_update(f"Saved features for all channels in '{output_folder_features}'")
 
 print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
+
+#############################################################################################
+# Step 7. Applying Logistic Regression
+print_header('Applying Logistic Regression')
+
+start = time.time()
+
+model, report = run_logistic_regression(all_features, labels) #train the model with data labeled
+
+y_pred, y_pred_labels = predict_logistic_regression(model, new_all_features) #test the model on our data
+
+print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')

@@ -194,7 +194,7 @@ print_header('Extracting features for selected channels')
 
 print_update('Converting time to object')
 
-all_features = {}
+test_all_features = {}
 
 for i in range(len(select)):
     chan_name = st_monitor.traces[i].stats.channel
@@ -211,7 +211,7 @@ for i in range(len(select)):
     # Extract features from the spectrogram
     features = extract_spectrogram_features(Sxx, f, t)
     features = {k: float(v) for k, v in features.items()}
-    all_features[chan_name] = features
+    test_all_features[chan_name] = features
 
     # Save features in the features folder
     feature_file_path = os.path.join(output_folder_features, f"{chan_name}_{date_str}_features.npy")
@@ -235,18 +235,19 @@ print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
 # Step 7. Apply PCA and then Logistic Regression
 print_header('Applying PCA + Logistic Regression')
 
-print(all_features)
+print(test_all_features)
 
 start = time.time()
 
 # Reduce training features
-features_pca = fit_pca(all_features, n_components=10)
+X_train = fit_pca(train_all_features, n_components=60) # train_all_features is vector of all features of the dataset from Caltech
+y_train = [labels[key] for key in train_all_features.keys()]  # choose labels of corresponding features
 
 # Train model
-model, report = run_logistic_regression(features_pca, labels)
+model, report = run_logistic_regression(X_train, y_train)
 
 # Apply to test features
-new_features_pca = transform_pca(new_all_features)
+new_features_pca = transform_pca(test_all_features) #test_all_features is vector of all features of our dataset (FAIAL)
 
 # Predict
 y_pred, y_pred_labels = predict_logistic_regression(model, new_features_pca)

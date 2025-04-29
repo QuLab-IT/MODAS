@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import entropy, kurtosis, skew, linregress
+from scipy.signal import find_peaks
 from sklearn.preprocessing import normalize
 
 def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
@@ -115,5 +116,32 @@ def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
     # 10. Spectral Slope
     slope, _, _, _, _ = linregress(freqs, freq_stats)
     features['spectral_slope'] = slope
+
+    # 11. Spectral Contrast (Peak vs Valley)
+    peaks, _ = find_peaks(freq_stats)
+    valleys, _ = find_peaks(-freq_stats)
+    peak_mean = np.mean(freq_stats[peaks]) if len(peaks) > 0 else 0
+    valley_mean = np.mean(freq_stats[valleys]) if len(valleys) > 0 else 1e-12
+    features['spectral_contrast'] = peak_mean / valley_mean
+
+    # 12. Zero-Crossing Rate (Temporal and Spectral)
+    features['temporal_zero_crossing'] = np.mean(np.diff(np.sign(time_stats)) != 0)
+    features['spectral_zero_crossing'] = np.mean(np.diff(np.sign(freq_stats)) != 0)
+
+    # 13. Modulation Energy / Variation
+    temporal_mod_energy = np.mean(np.diff(time_stats) ** 2)
+    spectral_mod_energy = np.mean(np.diff(freq_stats) ** 2)
+    features['temporal_mod_energy'] = temporal_mod_energy
+    features['spectral_mod_energy'] = spectral_mod_energy
+
+    # 14. Spectrogram Sharpness
+    sharpness = np.mean(np.abs(np.gradient(Sxx)))
+    features['spectrogram_sharpness'] = sharpness
+
+    # 15. Texture-based Features (Row and Column Differences)
+    diff_rows = np.diff(Sxx, axis=0)
+    diff_cols = np.diff(Sxx, axis=1)
+    features['texture_row_var'] = np.var(diff_rows)
+    features['texture_col_var'] = np.var(diff_cols)
 
     return features

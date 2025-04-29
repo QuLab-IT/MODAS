@@ -12,6 +12,7 @@ from models.Event_analyzer              import analyze_event_dynamics
 from models.Feature_extraction_ML       import extract_spectrogram_features
 from models.Spectrogram_data            import data_spectrogram
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
+from models.PCA                         import fit_pca, transform_pca
 from datetime                           import datetime
 import time 
 
@@ -231,14 +232,24 @@ print_update(f"Saved features for all channels in '{output_folder_features}'")
 print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
-# Step 7. Applying Logistic Regression
-print_header('Applying Logistic Regression')
+# Step 7. Apply PCA and then Logistic Regression
+print_header('Applying PCA + Logistic Regression')
+
+print(all_features)
 
 start = time.time()
 
-model, report = run_logistic_regression(all_features, labels) #train the model with data labeled
+# Reduce training features
+features_pca = fit_pca(all_features, n_components=10)
 
-y_pred, y_pred_labels = predict_logistic_regression(model, new_all_features) #test the model on our data
+# Train model
+model, report = run_logistic_regression(features_pca, labels)
+
+# Apply to test features
+new_features_pca = transform_pca(new_all_features)
+
+# Predict
+y_pred, y_pred_labels = predict_logistic_regression(model, new_features_pca)
 
 print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 

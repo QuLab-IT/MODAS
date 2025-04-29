@@ -145,3 +145,5 @@ def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
     features['texture_col_var'] = np.var(diff_cols)
 
     return features
+
+#returns 111 features right now 

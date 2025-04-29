@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import time 
 
 from obspy                              import Stream
 from models.HDAS_file_convert           import sampling_file_name, HDAS_meas_settings, read_bin_file
@@ -14,16 +15,15 @@ from models.Spectrogram_data            import data_spectrogram
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
 from models.PCA                         import fit_pca, transform_pca
 from datetime                           import datetime
-import time 
 
 #############################################################################################
 
 Name          = 'Faial Dia 20'                   # Project Name
 
-#When in MODAS PC
+# When in MODAS PC
 #raw_data_file = raw_data_file = 'D:\\DAS_FAIAL\\13_01_24 Parte 2\\ProcessedData' # Comment when not in MODAS
 
-#When in Dinis PC
+# When in Dénis PC
 raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
 
 if os.path.exists(raw_data_file):
@@ -77,6 +77,7 @@ print_header('DAS Raw Data converter', args)
 
 #############################################################################################
 # Step 1. Convert data into Obspy.stream
+
 start = time.time()
 print_small_header('Converting the Data into a stream')
 
@@ -177,7 +178,16 @@ analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(1890
 print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
-# Step 6. Feature Extraction
+# Step 6. Feature Extraction of Train Data Set
+
+start = time.time()
+
+
+
+print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
+
+#############################################################################################
+# Step 7. Feature Extraction of Test Data Set
 start = time.time()
 
 # Extract the date part from start_time
@@ -229,10 +239,10 @@ for i in range(len(select)):
 
 print_update(f"Saved features for all channels in '{output_folder_features}'")
 
-print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
+print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
-# Step 7. Apply PCA and then Logistic Regression
+# Step 8. Apply PCA and then Logistic Regression
 print_header('Applying PCA + Logistic Regression')
 
 print(test_all_features)
@@ -252,7 +262,7 @@ new_features_pca = transform_pca(test_all_features) #test_all_features is vector
 # Predict
 y_pred, y_pred_labels = predict_logistic_regression(model, new_features_pca)
 
-print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
+print_update(f"Step 8 completed in {time.time() - start:.2f} seconds")
 
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')

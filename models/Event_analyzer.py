@@ -4,7 +4,6 @@ from scipy.fft import fft, fftfreq
 from scipy.stats import norm
 
 def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index=0, fit_pdf=True):
-    print("=== DEBUG: Starting analyze_event_dynamics ===")
     print(f"Sampling Frequency (fs): {fs}")
     print(f"Time Window: {time_window}")
     print(f"Number of Segments: {n_segments}")
@@ -98,5 +97,3 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
         plt.grid(True)
         plt.tight_layout()
         plt.show()
-
-    print("=== DEBUG: Finished analyze_event_dynamics ===")

@@ -45,7 +45,7 @@ def predict_logistic_regression(model, all_features):
     # Predict probabilities
     y_pred = model.predict_proba(X)[:, 1]  # Probability of class "1"
 
-    # Convert probabilities into labels (threshold 0.5)
+    # Convert probabilities into labels
     y_pred_labels = (y_pred >= 0.5).astype(int)
 
     return y_pred, y_pred_labels

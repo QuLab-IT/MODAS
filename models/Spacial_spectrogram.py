@@ -32,7 +32,7 @@ def plot_spatial_spectrogram(stream, time_window, fs, spatial_sample, window_siz
         centers.append((start + window_size // 2) * spatial_sample)
 
     if len(spectro) < 2:
-        print("⚠️ Not enough windows for spatial spectrogram. Try reducing `window_size` or overlap.")
+        print(" Not enough windows for spatial spectrogram.")
         return
 
     spectro = np.array(spectro).T  # (n_freqs, n_windows)

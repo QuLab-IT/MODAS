@@ -42,8 +42,8 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
                        for i in range(n_segments)]
 
     freqs = fftfreq(n_total, 1/fs)
-    freqs_pos = freqs[freqs >= 0]
-
+    freqs_pos = freqs[freqs > 0]  # Remove zero to avoid log(0)
+    
     plt.figure(figsize=(12, 6))
 
     # a) Amplitude vs Frequency (with time as a parameter)
@@ -56,8 +56,9 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
     plt.title("Amplitude vs Frequency (at different time slices)")
     plt.xlabel("Frequency (Hz)")
     plt.ylabel("Amplitude")
+    plt.xscale('log')
     plt.legend()
-    plt.grid(True)
+    plt.grid(True, which='both', linestyle='--')
     plt.tight_layout()
     plt.show()
 
@@ -75,8 +76,9 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
     plt.plot(times_centered, dominant_freqs, 'o-')
     plt.xlabel("Time (s)")
     plt.ylabel("Dominant Frequency (Hz)")
+    plt.yscale('log')
     plt.title("Dominant Frequency Over Time")
-    plt.grid(True)
+    plt.grid(True, which='both', linestyle='--')
     plt.tight_layout()
     plt.show()
 
@@ -85,15 +87,16 @@ def analyze_event_dynamics(stream, fs, time_window, n_segments=10, channel_index
         from scipy.stats import gaussian_kde
 
         data = np.array(dominant_freqs)
-        kde = gaussian_kde(data)
-        x_range = np.linspace(min(data), max(data), 300)
+        kde = gaussian_kde(np.log(data))  # Use log-domain for KDE
+        x_range = np.linspace(np.log(min(data)), np.log(max(data)), 300)
         pdf_vals = kde(x_range)
 
         plt.figure(figsize=(8, 4))
-        plt.plot(x_range, pdf_vals)
+        plt.plot(np.exp(x_range), pdf_vals)  # Back to frequency domain for x-axis
         plt.title("PDF Fit of Dominant Frequencies")
         plt.xlabel("Frequency (Hz)")
         plt.ylabel("Density")
-        plt.grid(True)
+        plt.xscale('log')
+        plt.grid(True, which='both', linestyle='--')
         plt.tight_layout()
         plt.show()

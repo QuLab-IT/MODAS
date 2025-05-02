@@ -21,10 +21,10 @@ from datetime                           import datetime
 Name          = 'Faial Dia 20'                   # Project Name
 
 # When in MODAS PC
-#raw_data_file = raw_data_file = 'D:\\DAS_FAIAL\\13_01_24 Parte 2\\ProcessedData' # Comment when not in MODAS
+raw_data_file = 'D:\\DAS_FAIAL\\20_01_24 Anomalia\\ProcessedData' # Comment when not in MODAS
 
 # When in Dénis PC
-raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
+#raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
 
 if os.path.exists(raw_data_file):
     print("Found the folder!")
@@ -32,8 +32,8 @@ else:
     print("Path not found.")
 
 # Channel range to load
-start_channel = 2000
-stop_channel  = 2200
+start_channel = 0
+stop_channel  = 200
 channel_range = list(range(start_channel, stop_channel + 1))    # all channels
 select        = [87, 158, 199]                                  # selecting which ones to monitor
 select_spatial = list(range(len(channel_range)))                #all channels for spatial spectrogram
@@ -172,7 +172,7 @@ print_header('Analyzing Event Signal')
 
 start = time.time()
 
-analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(18900, 19800), channel_index="CH20920m",fit_pdf=False)
+analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(18900, 19800), channel_index="CH920m",fit_pdf=False)
 
 
 print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")

@@ -35,12 +35,9 @@ else:
 start_channel = 0
 stop_channel  = 4991
 channel_range = list(range(start_channel, stop_channel + 1))    # all channels
-select        = [0, 102, 204, 306, 408, 510, 612, 714, 816, 918,
- 1020, 1122, 1224, 1326, 1428, 1530, 1632, 1734, 1836, 1938,
- 1958, 1990, 2038, 2087, 2112, 2158, 2199, 2241, 2343, 2445,
- 2547, 2649, 2751, 2853, 2955, 3057, 3159, 3261, 3363, 3465,
- 3567, 3669, 3771, 3873, 3975, 4077, 4179, 4281, 4383, 4991]    # selecting which ones to monitor
-select_spatial = list(range(len(channel_range)))                #all channels for spatial spectrogram
+# select        = [0, 102, 204, 306, 408, 510, 612]    # selecting which ones to monitor
+select =  channel_range.copy()                         # all channels for feature extration of all channels
+select_spatial = list(range(len(channel_range)))                # all channels for spatial spectrogram
 
 window_norm   = 10.0                                            # running average window for time-domain normalization [s]
 band_freq     = [0.01, 10.0]                                    # Band pass filter [f_cut_min, f_cut_high] [Hz]

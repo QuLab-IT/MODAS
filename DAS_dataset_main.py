@@ -21,10 +21,10 @@ from datetime                           import datetime
 Name          = 'Faial Dia 20'                   # Project Name
 
 # When in MODAS PC
-raw_data_file = 'D:\\DAS_FAIAL\\20_01_24 Anomalia\\ProcessedData' # Comment when not in MODAS
+# raw_data_file = 'D:\\DAS_FAIAL\\20_01_24 Anomalia\\ProcessedData' # Comment when not in MODAS
 
 # When in Dénis PC
-#raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
+raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
 
 if os.path.exists(raw_data_file):
     print("Found the folder!")
@@ -243,26 +243,52 @@ print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
 # Step 8. Apply PCA and then Logistic Regression
-print_header('Applying PCA + Logistic Regression')
+# print_header('Applying PCA + Logistic Regression')
 
-print(test_all_features)
+# print(test_all_features)
 
-start = time.time()
+# start = time.time()
 
 # Reduce training features
-X_train = fit_pca(train_all_features, n_components=60) # train_all_features is vector of all features of the dataset from Caltech
-y_train = [labels[key] for key in train_all_features.keys()]  # choose labels of corresponding features
+# X_train = fit_pca(train_all_features, n_components=60) # train_all_features is vector of all features of the dataset from Caltech
+# y_train = [labels[key] for key in train_all_features.keys()]  # choose labels of corresponding features
 
 # Train model
-model, report = run_logistic_regression(X_train, y_train)
+# model, report = run_logistic_regression(X_train, y_train)
 
 # Apply to test features
-new_features_pca = transform_pca(test_all_features) #test_all_features is vector of all features of our dataset (FAIAL)
+# new_features_pca = transform_pca(test_all_features) #test_all_features is vector of all features of our dataset (FAIAL)
 
 # Predict
-y_pred, y_pred_labels = predict_logistic_regression(model, new_features_pca)
+# y_pred, y_pred_labels = predict_logistic_regression(model, new_features_pca)
 
-print_update(f"Step 8 completed in {time.time() - start:.2f} seconds")
+# print_update(f"Step 8 completed in {time.time() - start:.2f} seconds")
 
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')
+
+#############################################################################################
+#Testing my Classifier with MNIST
+
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
+
+# Load MNIST data
+mnist = fetch_openml('mnist_784', version=1)
+X = mnist.data / 255.0  # Normalize to [0,1]
+y = mnist.target.astype(int)
+
+# Split into train and test sets
+X_train_raw, X_test_raw, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+X_train_pca = fit_pca(X_train_raw, n_components=60)
+X_test_pca = transform_pca(X_test_raw)
+
+model, report = run_logistic_regression(X_train_pca, y_train)
+
+y_pred = model.predict(X_test_pca)
+
+from sklearn.metrics import classification_report, accuracy_score
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))

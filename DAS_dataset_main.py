@@ -33,10 +33,10 @@ else:
 
 # Channel range to load
 start_channel = 0
-stop_channel  = 4991
+stop_channel  = 200
 channel_range = list(range(start_channel, stop_channel + 1))    # all channels
-# select        = [0, 102, 204, 306, 408, 510, 612]    # selecting which ones to monitor
-select =  channel_range.copy()                         # all channels for feature extration of all channels
+select        = [0, 97]    # selecting which ones to monitor
+# select =  channel_range.copy()                         # all channels for feature extration of all channels
 select_spatial = list(range(len(channel_range)))                # all channels for spatial spectrogram
 
 window_norm   = 10.0                                            # running average window for time-domain normalization [s]
@@ -173,7 +173,7 @@ print_header('Analyzing Event Signal')
 
 start = time.time()
 
-analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(18900, 19800), channel_index="CH20920m",fit_pdf=False)
+analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(18900, 19800), channel_index="CH1020m",fit_pdf=False)
 
 
 print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")

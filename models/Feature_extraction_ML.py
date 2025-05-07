@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import entropy, kurtosis, skew
+from scipy.stats import entropy, kurtosis, skew, linregress
 from scipy.signal import find_peaks, stft, hilbert
 from sklearn.preprocessing import normalize
 from scipy.fft import fft
@@ -27,18 +27,21 @@ def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
 
     # Frequency Domain Features
     freq_stats = np.mean(Sxx, axis=1)
+    spectral_centroid = np.sum(freqs * freq_stats) / np.sum(freq_stats)
+
     features.update({
         'dominant_frequency': freqs[np.argmax(freq_stats)],
-        'central_frequency': np.sum(freqs * freq_stats) / np.sum(freq_stats),
+        'central_frequency': spectral_centroid,  # same as spectral centroid
         'average_frequency': np.mean(freqs),
         'peak_frequency': freqs[np.argmax(freq_stats)],
         'spectral_entropy': entropy(freq_stats / np.sum(freq_stats)),
-        'spectral_centroid': np.sum(freqs * freq_stats) / np.sum(freq_stats),
-        'spectral_bandwidth': np.sqrt(np.sum((freqs - features['spectral_centroid'])**2 * freq_stats) / np.sum(freq_stats)),
+        'spectral_centroid': spectral_centroid,
+        'spectral_bandwidth': np.sqrt(np.sum((freqs - spectral_centroid)**2 * freq_stats) / np.sum(freq_stats)),
         'spectral_flatness': np.exp(np.mean(np.log(freq_stats + 1e-12))) / (np.mean(freq_stats) + 1e-12),
         'spectral_rolloff_85': freqs[np.where(np.cumsum(freq_stats) >= 0.85 * np.sum(freq_stats))[0][0]],
         'spectral_skewness': skew(freq_stats),
     })
+
 
     # Percentiles
     percentiles = [5, 25, 50, 75, 95]

@@ -1,7 +1,10 @@
 import numpy as np
 import os
-import time 
+import time
 
+from sklearn.datasets                   import fetch_openml
+from sklearn.model_selection            import train_test_split
+from sklearn.metrics                    import classification_report, accuracy_score
 from obspy                              import Stream
 from models.HDAS_file_convert           import sampling_file_name, HDAS_meas_settings, read_bin_file
 from models.Obspy_processing            import create_stream, ram_normalization, show_sort_plot, show_fft
@@ -64,7 +67,7 @@ offset           = meas_settings['Pos Offset']              # Determine the leng
 
 aquisition_time  = n_time_samples/frequency_sample          # Determine the total time of aquisition in [s]
 
-###########################
+##############################################################################################
 # Step 0.1 Print Header
 args = { 'Project name'   : Name,
          'Fiber lenght'   : f'{n_channels*spatial_sample + offset} m',
@@ -180,16 +183,7 @@ analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(1890
 print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
-# Step 6. Feature Extraction of Train Data Set
-
-start = time.time()
-
-
-
-print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
-
-#############################################################################################
-# Step 7. Feature Extraction of Test Data Set
+# Step 6. Feature Extraction of Data Set
 start = time.time()
 
 # Extract the date part from start_time
@@ -206,7 +200,7 @@ print_header('Extracting features for selected channels')
 
 print_update('Converting time to object')
 
-test_all_features = {}
+all_features = {}
 
 for i in range(len(select)):
     chan_name = st_monitor.traces[i].stats.channel
@@ -223,7 +217,7 @@ for i in range(len(select)):
     # Extract features from the spectrogram
     features = extract_spectrogram_features(Sxx, f, t)
     features = {k: float(v) for k, v in features.items()}
-    test_all_features[chan_name] = features
+    all_features[chan_name] = features
 
     # Save features in the features folder
     feature_file_path = os.path.join(output_folder_features, f"{chan_name}_{date_str}_features.npy")
@@ -241,15 +235,17 @@ for i in range(len(select)):
 
 print_update(f"Saved features for all channels in '{output_folder_features}'")
 
-print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
+print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
-# Step 8. Apply PCA and then Logistic Regression
+# Step 7. Apply PCA and then Logistic Regression
 # print_header('Applying PCA + Logistic Regression')
 
 # print(test_all_features)
 
 # start = time.time()
+
+#i need to do a train test split
 
 # Reduce training features
 # X_train = fit_pca(train_all_features, n_components=60) # train_all_features is vector of all features of the dataset from Caltech
@@ -264,7 +260,7 @@ print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 # Predict
 # y_pred, y_pred_labels = predict_logistic_regression(model, new_features_pca)
 
-# print_update(f"Step 8 completed in {time.time() - start:.2f} seconds")
+# print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')
@@ -272,12 +268,9 @@ print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 #############################################################################################
 #Testing my Classifier with MNIST
 
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
-
 # Load MNIST data
 mnist = fetch_openml('mnist_784', version=1)
-X = mnist.data / 255.0  # Normalize to [0,1]
+X = mnist.data / 255.0  # Normalize
 y = mnist.target.astype(int)
 
 # Split into train and test sets
@@ -287,10 +280,7 @@ X_train_pca = fit_pca(X_train_raw, n_components=60)
 X_test_pca = transform_pca(X_test_raw)
 
 model, report = run_logistic_regression(X_train_pca, y_train)
-
 y_pred = model.predict(X_test_pca)
-
-from sklearn.metrics import classification_report, accuracy_score
 
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))

@@ -11,7 +11,7 @@ from models.Obspy_processing            import create_stream, ram_normalization,
 from models.ASDF_file_convert           import write_to_h5
 from models.User_print                  import print_header, print_small_header, print_update
 from models.Spectrogram_plot            import plot_spectrogram
-from models.Spacial_spectrogram         import plot_spatial_spectrogram
+from models.Spacial_spectrogram         import plot_spatial_spectrogram, plot_spatial_spectrogram_interval, compute_fk_spectrum
 from models.Event_analyzer              import analyze_event_dynamics
 from models.Feature_extraction_ML       import extract_spectrogram_features
 from models.Spectrogram_data            import data_spectrogram
@@ -24,10 +24,10 @@ from datetime                           import datetime
 Name          = 'Faial Dia 20'                   # Project Name
 
 # When in MODAS PC
-raw_data_file = 'D:\\DAS_FAIAL\\20_01_24 Anomalia\\ProcessedData' # Comment when not in MODAS
+# raw_data_file = 'D:\\DAS_FAIAL\\20_01_24 Anomalia\\ProcessedData' # Comment when not in MODAS
 
 # When in Dénis PC
-# raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
+raw_data_file = '/Users/denis/Library/CloudStorage/GoogleDrive-drfafelgueiras@gmail.com/My Drive/Bolsa/20_01_24 Anomalia/ProcessedData' #comment when in MODAS
 
 if os.path.exists(raw_data_file):
     print("Found the folder!")
@@ -167,7 +167,20 @@ print_update(f"Step 3 completed in {time.time() - start:.2f} seconds")
 start = time.time()
 print_header('Generating spatial spectrogram for all channels')
 
-plot_spatial_spectrogram(stream=st_monitor_spatial, time_window=(0, 43218), fs=frequency_sample, spatial_sample=spatial_sample, window_size=32, overlap=0.9)
+print_update("Plotting Spatial Spectrogram of one specific time")
+
+plot_spatial_spectrogram(stream=st_monitor_spatial, time_window=(0, 43218), fs=frequency_sample, spatial_sample=spatial_sample, window_size=32, overlap=0.9, target_time = 19800)
+
+print_update("Plotting Spatial Spectrogram of time interval")
+
+plot_spatial_spectrogram_interval(stream=st_monitor_spatial, time_window=(0, 43218), fs=frequency_sample, spatial_sample=spatial_sample, window_size=32, overlap=0.9, target_time=19810, interval=0.2)
+
+print_update("Plotting F-K Spectrogram")
+
+n_channels_fk = int(1000 / spatial_sample)
+subset_stream = st_monitor_spatial[:n_channels_fk]
+
+compute_fk_spectrum(stream=subset_stream, fs=frequency_sample, spatial_sample=spatial_sample, time_window=(0, 1800))
 
 print_update(f"Step 4 completed in {time.time() - start:.2f} seconds")
 

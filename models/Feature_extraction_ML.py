@@ -3,6 +3,7 @@ from scipy.stats import entropy, kurtosis, skew, linregress
 from scipy.signal import find_peaks, stft, hilbert
 from sklearn.preprocessing import normalize
 from scipy.fft import fft
+from scipy.signal import csd, welch
 
 def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
     features = {}
@@ -105,3 +106,53 @@ def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
     features['spectrogram_sharpness'] = sharpness
 
     return features
+
+def extract_csd_features(multichannel_data, fs, nperseg=256, noverlap=128, max_freq_bins=10):
+    n_channels, n_samples = multichannel_data.shape
+    f, _ = welch(multichannel_data[0], fs=fs, nperseg=nperseg)
+    
+    # Limit number of frequency bins
+    freq_indices = np.linspace(0, len(f) - 1, max_freq_bins, dtype=int)
+
+    csd_matrix = np.zeros((n_channels, n_channels, len(f)), dtype=np.complex128)
+
+    for i in range(n_channels):
+        for j in range(i, n_channels):
+            _, Pxy = csd(multichannel_data[i], multichannel_data[j], fs=fs,
+                         nperseg=nperseg, noverlap=noverlap)
+            csd_matrix[i, j, :] = Pxy
+            if i != j:
+                csd_matrix[j, i, :] = np.conj(Pxy)
+
+    features = {}
+    for k in freq_indices:
+        C = csd_matrix[:, :, k]
+
+        # Total power
+        features[f"trace_f{k}"] = np.trace(C).real
+
+        # Off-diagonal energy
+        off_diag = C - np.diag(np.diag(C))
+        features[f"offdiag_frobenius_f{k}"] = np.linalg.norm(off_diag, ord='fro').real
+
+        # Spectral flatness of eigenvalues
+        eigvals = np.abs(np.linalg.eigvalsh(C))
+        eigvals += 1e-10  # Avoid log(0)
+        geo_mean = np.exp(np.mean(np.log(eigvals)))
+        arith_mean = np.mean(eigvals)
+        features[f"spectral_flatness_f{k}"] = geo_mean / arith_mean
+
+    return features
+
+def compute_csd_matrix(data_matrix, fs, nperseg=256):
+    n_channels = data_matrix.shape[0]
+    csdm = np.zeros((n_channels, n_channels), dtype=np.complex64)
+
+    # Compute the cross-spectral density for each pair of channels
+    for i in range(n_channels):
+        for j in range(i, n_channels):
+            _, Pxy = csd(data_matrix[i], data_matrix[j], fs=fs, nperseg=nperseg)
+            csdm[i, j] = np.mean(Pxy)
+            csdm[j, i] = np.conj(csdm[i, j])  # Ensuring the matrix is Hermitian
+
+    return csdm

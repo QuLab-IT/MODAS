@@ -12,8 +12,8 @@ from models.ASDF_file_convert           import write_to_h5
 from models.User_print                  import print_header, print_small_header, print_update
 from models.Spectrogram_plot            import plot_spectrogram
 from models.Spacial_spectrogram         import plot_spatial_spectrogram, plot_spatial_spectrogram_interval, compute_fk_spectrum
-from models.Event_analyzer              import analyze_event_dynamics
-from models.Feature_extraction_ML       import extract_spectrogram_features
+from models.Event_analyzer              import analyze_event_dynamics 
+from models.Feature_extraction_ML       import extract_spectrogram_features, extract_csd_features, compute_csd_matrix #not being used anymore
 from models.Spectrogram_data            import data_spectrogram
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
 from models.PCA                         import fit_pca, transform_pca
@@ -196,6 +196,8 @@ analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(1890
 print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
+import matplotlib.pyplot as plt
+
 # Step 6. Feature Extraction of Data Set
 start = time.time()
 
@@ -248,8 +250,61 @@ for i in range(len(select)):
 
 print_update(f"Saved features for all channels in '{output_folder_features}'")
 
-print_update(f"Step 6 completed in {time.time() - start:.2f} seconds")
+# Select a multichannel window
+data_matrix = np.array([tr.data for tr in st_monitor_spatial])
+window_start = int(frequency_sample * 18900)
+window_end = int(frequency_sample * 19800)
+data_matrix = data_matrix[:, window_start:window_end]
 
+# Extract features (CSDM)
+csd_features = extract_csd_features(data_matrix, fs=frequency_sample)
+
+# Compute CSDM
+csdm = compute_csd_matrix(data_matrix, fs=frequency_sample)
+
+# Plot CSDM Magnitude
+plt.figure(figsize=(6, 5))
+plt.imshow(np.abs(csdm), cmap='viridis')
+plt.colorbar(label='|CSD|')
+plt.title('Cross-Spectral Density Magnitude')
+plt.xlabel('Channel Index')
+plt.ylabel('Channel Index')
+plt.tight_layout()
+plt.savefig('csdm_magnitude_heatmap.png')
+plt.close()
+
+# Plot CSDM Phase
+plt.figure(figsize=(6, 5))
+plt.imshow(np.angle(csdm), cmap='twilight')
+plt.colorbar(label='Phase (radians)')
+plt.title('CSD Phase Matrix')
+plt.xlabel('Channel Index')
+plt.ylabel('Channel Index')
+plt.tight_layout()
+plt.savefig('csdm_phase_heatmap.png')
+plt.close()
+
+# Plot Eigenvalue Spectrum
+eigenvalues = np.linalg.eigvalsh(csdm)
+plt.figure()
+plt.plot(np.sort(eigenvalues)[::-1], 'o-')
+plt.title("CSDM Eigenvalue Spectrum")
+plt.xlabel("Eigenvalue Index")
+plt.ylabel("Eigenvalue")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('csdm_eigenvalue_spectrum.png')
+plt.close()
+
+# Optionally, print or save CSD features
+print("CSD Features:")
+for key, val in features.items():
+    print(f"{key}: {val:.6f}")
+
+# Print total execution time
+end = time.time()
+execution_time = end - start
+print(f"Total execution time: {execution_time:.2f} seconds")
 #############################################################################################
 # Step 7. Apply PCA and then Logistic Regression
 # print_header('Applying PCA + Logistic Regression')

@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import time
+import matplotlib.pyplot as plt
 
 from sklearn.datasets                   import fetch_openml
 from sklearn.model_selection            import train_test_split
@@ -196,8 +197,6 @@ analyze_event_dynamics(stream=st_monitor, fs=frequency_sample, time_window=(1890
 print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
-import matplotlib.pyplot as plt
-
 # Step 6. Feature Extraction of Data Set
 start = time.time()
 
@@ -215,40 +214,40 @@ print_header('Extracting features for selected channels')
 
 print_update('Converting time to object')
 
-all_features = {}
+features = {}
 
-for i in range(len(select)):
-    chan_name = st_monitor.traces[i].stats.channel
-    print_update(f'Processing spectrogram and extracting features for channel {chan_name}')
+#for i in range(len(select)):
+#    chan_name = st_monitor.traces[i].stats.channel
+#    print_update(f'Processing spectrogram and extracting features for channel {chan_name}')
 
     # Compute spectrogram
-    Sxx, f, t = data_spectrogram(st_monitor, channel_index=i, fs=frequency_sample, start_time=start_datetime, time_window=(18900, 19800))
+#    Sxx, f, t = data_spectrogram(st_monitor, channel_index=i, fs=frequency_sample, start_time=start_datetime, time_window=(18900, 19800))
 
     # Save spectrogram data
-    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"), Sxx)
-    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"), f)
-    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"), t)
+#    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"), Sxx)
+#    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"), f)
+#    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"), t)
 
     # Extract features from the spectrogram
-    features = extract_spectrogram_features(Sxx, f, t)
-    features = {k: float(v) for k, v in features.items()}
-    all_features[chan_name] = features
+#    features = extract_spectrogram_features(Sxx, f, t)
+#    features = {k: float(v) for k, v in features.items()}
+#    all_features[chan_name] = features
 
     # Save features in the features folder
-    feature_file_path = os.path.join(output_folder_features, f"{chan_name}_{date_str}_features.npy")
-    np.save(feature_file_path, features)
+#    feature_file_path = os.path.join(output_folder_features, f"{chan_name}_{date_str}_features.npy")
+#    np.save(feature_file_path, features)
 
     # Print the feature vector and length
-    print(f"\nFeature vector for channel {chan_name} ({len(features)} features):")
-    for key, value in features.items():
-        print(f"{key}: {value:.6f}")
+#    print(f"\nFeature vector for channel {chan_name} ({len(features)} features):")
+#    for key, value in features.items():
+#        print(f"{key}: {value:.6f}")
 
     # Delete the spectrogram files to save space
-    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"))
-    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"))
-    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"))
+#    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"))
+#    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"))
+#    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"))
 
-print_update(f"Saved features for all channels in '{output_folder_features}'")
+# print_update(f"Saved features for all channels in '{output_folder_features}'")
 
 # Select a multichannel window
 data_matrix = np.array([tr.data for tr in st_monitor_spatial])
@@ -262,6 +261,18 @@ csd_features = extract_csd_features(data_matrix, fs=frequency_sample)
 # Compute CSDM
 csdm = compute_csd_matrix(data_matrix, fs=frequency_sample)
 
+# Optionally, print or save CSD features
+print("CSD Features:")
+for key, val in csd_features.items():
+    print(f"{key}: {val:.6f}")
+
+# Save CSDM features to a file
+csd_feature_file_path = os.path.join(output_folder_features, f"csd_features_{date_str}.npy")
+np.save(csd_feature_file_path, csd_features)
+
+# Optionally, print the path where the features are saved
+print(f"CSDM features saved to {csd_feature_file_path}")
+
 # Plot CSDM Magnitude
 plt.figure(figsize=(6, 5))
 plt.imshow(np.abs(csdm), cmap='viridis')
@@ -270,8 +281,7 @@ plt.title('Cross-Spectral Density Magnitude')
 plt.xlabel('Channel Index')
 plt.ylabel('Channel Index')
 plt.tight_layout()
-plt.savefig('csdm_magnitude_heatmap.png')
-plt.close()
+plt.show()
 
 # Plot CSDM Phase
 plt.figure(figsize=(6, 5))
@@ -281,8 +291,7 @@ plt.title('CSD Phase Matrix')
 plt.xlabel('Channel Index')
 plt.ylabel('Channel Index')
 plt.tight_layout()
-plt.savefig('csdm_phase_heatmap.png')
-plt.close()
+plt.show()
 
 # Plot Eigenvalue Spectrum
 eigenvalues = np.linalg.eigvalsh(csdm)
@@ -293,13 +302,7 @@ plt.xlabel("Eigenvalue Index")
 plt.ylabel("Eigenvalue")
 plt.grid(True)
 plt.tight_layout()
-plt.savefig('csdm_eigenvalue_spectrum.png')
-plt.close()
-
-# Optionally, print or save CSD features
-print("CSD Features:")
-for key, val in features.items():
-    print(f"{key}: {val:.6f}")
+plt.show()
 
 # Print total execution time
 end = time.time()

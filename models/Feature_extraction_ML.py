@@ -4,6 +4,7 @@ from scipy.signal import find_peaks, stft, hilbert
 from sklearn.preprocessing import normalize
 from scipy.fft import fft
 from scipy.signal import csd, welch
+import matplotlib.pyplot as plt
 
 def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
     features = {}

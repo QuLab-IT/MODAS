@@ -14,8 +14,7 @@ from models.User_print                  import print_header, print_small_header,
 from models.Spectrogram_plot            import plot_spectrogram
 from models.Spacial_spectrogram         import plot_spatial_spectrogram, plot_spatial_spectrogram_interval, compute_fk_spectrum
 from models.Event_analyzer              import analyze_event_dynamics 
-from models.Feature_extraction_ML       import extract_spectrogram_features, extract_csd_features, compute_csd_matrix #not being used anymore
-from models.Spectrogram_data            import data_spectrogram
+from models.Feature_extraction_ML       import extract_csd_vector #not being used anymore
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
 from models.PCA                         import fit_pca, transform_pca
 from datetime                           import datetime
@@ -204,50 +203,13 @@ start = time.time()
 start_datetime = datetime.strptime(start_time, '%Y-%m-%d-%H-%M-%S')
 date_str = start_datetime.strftime('%Y-%m-%d')  # Extracting the date in YYYY-MM-DD format
 
-# Create output folders for spectrograms and features
-output_folder_spectrograms = 'saved_spectrograms'
+# Create output folders for features
 output_folder_features = 'saved_features'
-os.makedirs(output_folder_spectrograms, exist_ok=True)
 os.makedirs(output_folder_features, exist_ok=True)
 
 print_header('Extracting features for selected channels')
 
 print_update('Converting time to object')
-
-features = {}
-
-#for i in range(len(select)):
-#    chan_name = st_monitor.traces[i].stats.channel
-#    print_update(f'Processing spectrogram and extracting features for channel {chan_name}')
-
-    # Compute spectrogram
-#    Sxx, f, t = data_spectrogram(st_monitor, channel_index=i, fs=frequency_sample, start_time=start_datetime, time_window=(18900, 19800))
-
-    # Save spectrogram data
-#    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"), Sxx)
-#    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"), f)
-#    np.save(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"), t)
-
-    # Extract features from the spectrogram
-#    features = extract_spectrogram_features(Sxx, f, t)
-#    features = {k: float(v) for k, v in features.items()}
-#    all_features[chan_name] = features
-
-    # Save features in the features folder
-#    feature_file_path = os.path.join(output_folder_features, f"{chan_name}_{date_str}_features.npy")
-#    np.save(feature_file_path, features)
-
-    # Print the feature vector and length
-#    print(f"\nFeature vector for channel {chan_name} ({len(features)} features):")
-#    for key, value in features.items():
-#        print(f"{key}: {value:.6f}")
-
-    # Delete the spectrogram files to save space
-#    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_Sxx.npy"))
-#    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_f.npy"))
-#    os.remove(os.path.join(output_folder_spectrograms, f"{chan_name}_{date_str}_t.npy"))
-
-# print_update(f"Saved features for all channels in '{output_folder_features}'")
 
 # Select a multichannel window
 data_matrix = np.array([tr.data for tr in st_monitor_spatial])
@@ -256,58 +218,20 @@ window_end = int(frequency_sample * 19800)
 data_matrix = data_matrix[:, window_start:window_end]
 
 # Extract features (CSDM)
-csd_features = extract_csd_features(data_matrix, fs=frequency_sample)
-
-# Compute CSDM
-csdm = compute_csd_matrix(data_matrix, fs=frequency_sample)
-
-# Optionally, print or save CSD features
-print("CSD Features:")
-for key, val in csd_features.items():
-    print(f"{key}: {val:.6f}")
+csd_feature_vector = extract_csd_vector(data_matrix, fs=frequency_sample)
 
 # Save CSDM features to a file
 csd_feature_file_path = os.path.join(output_folder_features, f"csd_features_{date_str}.npy")
-np.save(csd_feature_file_path, csd_features)
+np.save(csd_feature_file_path, csd_feature_vector)
 
 # Optionally, print the path where the features are saved
 print(f"CSDM features saved to {csd_feature_file_path}")
-
-# Plot CSDM Magnitude
-plt.figure(figsize=(6, 5))
-plt.imshow(np.abs(csdm), cmap='viridis')
-plt.colorbar(label='|CSD|')
-plt.title('Cross-Spectral Density Magnitude')
-plt.xlabel('Channel Index')
-plt.ylabel('Channel Index')
-plt.tight_layout()
-plt.show()
-
-# Plot CSDM Phase
-plt.figure(figsize=(6, 5))
-plt.imshow(np.angle(csdm), cmap='twilight')
-plt.colorbar(label='Phase (radians)')
-plt.title('CSD Phase Matrix')
-plt.xlabel('Channel Index')
-plt.ylabel('Channel Index')
-plt.tight_layout()
-plt.show()
-
-# Plot Eigenvalue Spectrum
-eigenvalues = np.linalg.eigvalsh(csdm)
-plt.figure()
-plt.plot(np.sort(eigenvalues)[::-1], 'o-')
-plt.title("CSDM Eigenvalue Spectrum")
-plt.xlabel("Eigenvalue Index")
-plt.ylabel("Eigenvalue")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
 
 # Print total execution time
 end = time.time()
 execution_time = end - start
 print(f"Total execution time: {execution_time:.2f} seconds")
+
 #############################################################################################
 # Step 7. Apply PCA and then Logistic Regression
 # print_header('Applying PCA + Logistic Regression')

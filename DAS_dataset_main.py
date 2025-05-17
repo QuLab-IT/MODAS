@@ -14,9 +14,9 @@ from models.User_print                  import print_header, print_small_header,
 from models.Spectrogram_plot            import plot_spectrogram
 from models.Spacial_spectrogram         import plot_spatial_spectrogram, plot_spatial_spectrogram_interval, compute_fk_spectrum
 from models.Event_analyzer              import analyze_event_dynamics 
-from models.Feature_extraction_ML       import extract_csd_vector #not being used anymore
+from models.Feature_extraction_ML       import extract_csd_vector
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
-from models.PCA                         import fit_pca, transform_pca
+from models.PCA                         import fit_pca, transform_pca, get_explained_variance, plot_explained_variance
 from datetime                           import datetime
 
 #############################################################################################
@@ -234,28 +234,23 @@ print(f"Total execution time: {execution_time:.2f} seconds")
 
 #############################################################################################
 # Step 7. Apply PCA and then Logistic Regression
-# print_header('Applying PCA + Logistic Regression')
+print_header('Applying PCA + Logistic Regression')
 
-# print(test_all_features)
-
-# start = time.time()
+start = time.time()
 
 #i need to do a train test split
 
-# Reduce training features
-# X_train = fit_pca(train_all_features, n_components=60) # train_all_features is vector of all features of the dataset from Caltech
-# y_train = [labels[key] for key in train_all_features.keys()]  # choose labels of corresponding features
+# Suppose X is your (n_samples, n_features) matrix from extract_csd_vector
+X_reduced = fit_pca(csd_feature_vector, variance_threshold=0.95)  # auto-select components for 95% variance
 
-# Train model
-# model, report = run_logistic_regression(X_train, y_train)
+print("Explained variance ratios:", get_explained_variance())
 
-# Apply to test features
-# new_features_pca = transform_pca(test_all_features) #test_all_features is vector of all features of our dataset (FAIAL)
+plot_explained_variance()  # visualizes individual + cumulative variance
 
-# Predict
-# y_pred, y_pred_labels = predict_logistic_regression(model, new_features_pca)
+# Later on, transform new samples with the same PCA
+# X_new_reduced = transform_pca(X_new)
 
-# print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
+print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
 
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')

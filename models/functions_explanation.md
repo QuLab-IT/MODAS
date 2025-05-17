@@ -1,27 +1,27 @@
 # Imports done in main file 
 
-import numpy as np - for numerical operations
-import os - for retrieving data from drive
-import time - to measure how long each step takes
-import matplotlib.pyplot as plt - for plotting
+- import numpy as np - for numerical operations
+- import os - for retrieving data from drive
+- import time - to measure how long each step takes
+- import matplotlib.pyplot as plt - for plotting
 
-from sklearn.datasets                   import fetch_openml
-from sklearn.model_selection            import train_test_split
-from sklearn.metrics                    import classification_report, accuracy_score
-from obspy                              import Stream
-from models.HDAS_file_convert           import sampling_file_name, HDAS_meas_settings, read_bin_file
-from models.Obspy_processing            import create_stream, ram_normalization, show_sort_plot, show_fft
-from models.ASDF_file_convert           import write_to_h5
-from models.User_print                  import print_header, print_small_header, print_update
-from models.Spectrogram_plot            import plot_spectrogram
-from models.Spacial_spectrogram         import plot_spatial_spectrogram, plot_spatial_spectrogram_interval, compute_fk_spectrum
-from models.Event_analyzer              import analyze_event_dynamics 
-from models.Feature_extraction_ML       import extract_csd_vector #not being used anymore
-from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
-from models.PCA                         import fit_pca, transform_pca
-from datetime                           import datetime - also for time tracking
+- from sklearn.datasets                   import fetch_openml
+- from sklearn.model_selection            import train_test_split
+- from sklearn.metrics                    import classification_report, accuracy_score
+- from obspy                              import Stream
+- from models.HDAS_file_convert           import sampling_file_name, HDAS_meas_settings, read_bin_file
+- from models.Obspy_processing            import create_stream, ram_normalization, show_sort_plot, show_fft
+- from models.ASDF_file_convert           import write_to_h5
+- from models.User_print                  import print_header, print_small_header, print_update
+- from models.Spectrogram_plot            import plot_spectrogram
+- from models.Spacial_spectrogram         import plot_spatial_spectrogram, plot_spatial_spectrogram_interval, compute_fk_spectrum
+- from models.Event_analyzer              import analyze_event_dynamics 
+- from models.Feature_extraction_ML       import extract_csd_vector #not being used anymore
+- from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
+- from models.PCA                         import fit_pca, transform_pca
+- from datetime                           import datetime - also for time tracking
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.HDAS_file_convert
 
@@ -32,7 +32,7 @@ from datetime                           import datetime - also for time tracking
 - HDAS_meas_settings – Extracts measurement and acquisition settings from a sample HDAS file header.
 - HDAS_2DMap – Constructs a 2D spatial-temporal data array from multiple HDAS binary files.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.Obspy_processing
 
@@ -42,7 +42,7 @@ from datetime                           import datetime - also for time tracking
 - show_sort_plot – Plots each trace in a stream over time in a vertically stacked layout.
 - show_fft – Computes and plots the FFT of each trace in a stream, limited to low frequencies.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.ASDF_file_convert
 
@@ -50,7 +50,7 @@ from datetime                           import datetime - also for time tracking
 - write_to_h5 – Saves all trace data and metadata from an ObsPy Stream to an HDF5 file.
 - read_from_h5 – Loads trace data and metadata from an HDF5 file into an ObsPy Stream.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.User_print
 
@@ -60,13 +60,13 @@ from datetime                           import datetime - also for time tracking
 - print_separator – Prints a full-width line separator.
 - print_update – Prints a single update line.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.Spectrogram_plot
 
 - plot_spectrogram — Computes and plots a time-frequency spectrogram of a selected channel from a stream, optionally limited by time and frequency ranges, with time axis formatted as datetime if provided.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.Spacial_spectrogram
 
@@ -74,13 +74,13 @@ from datetime                           import datetime - also for time tracking
 - plot_spatial_spectrogram_interval — Computes and plots a time-evolving spatial spectrogram over a specified time interval by averaging FFT power spectra along spatial windows for each time sample.
 - compute_fk_spectrum — Computes and plots the 2D frequency–wavenumber (f–k) power spectrum from a time window of multi-channel data using a 2D FFT.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.Event_analyzer
 
 - analyze_event_dynamics - Analyzes a chosen channel’s frequency content over time by segmenting the signal, plotting amplitude spectra, tracking dominant frequencies, and optionally fitting their PDF.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.Feature_extraction_ML
 
@@ -88,18 +88,19 @@ from datetime                           import datetime - also for time tracking
 
 - extract_csd_vector - Computes and flattens cross-spectral density matrices across channel pairs and selected frequencies into a single feature vector for multichannel signals.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.Logistic_Regression
 
 - run_logistic_regression - Trains and evaluates a logistic regression model on given features and labels, printing a classification report.
 - predict_logistic_regression - Uses a trained logistic regression model to predict probabilities and binary labels from new features.
 
-#######################################################################################################################################
+#######################################################################################################
 
 # models.PCA
 
-- fit_pca - Standardizes input features, fits PCA with specified components, and returns the reduced data.
-- transform_pca - Applies previously fitted scaler and PCA to new features to get reduced representation.
-- get_explained_variance - Returns the explained variance ratio of each principal component from the fitted PCA model.
-- _prepare_matrix - Converts various input feature formats (NumPy array, DataFrame, or dict) into a 2D NumPy array suitable for PCA.
+- fit_pca - Fits PCA on standardized input features, automatically choosing or using a specified number of components to reduce dimensionality while preserving variance.
+- transform_pca - Applies the previously fitted scaler and PCA transformation to new input features.
+- get_explained_variance - Returns the percentage of variance explained by each principal component from the fitted PCA.
+- plot_explained_variance - Plots individual and cumulative explained variance ratios of the fitted PCA components.
+- _prepare_matrix - Converts various input formats (NumPy array, DataFrame, dict) into a 2D NumPy array suitable for PCA.

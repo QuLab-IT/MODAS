@@ -14,7 +14,7 @@ from models.User_print                  import print_header, print_small_header,
 from models.Spectrogram_plot            import plot_spectrogram
 from models.Spacial_spectrogram         import plot_spatial_spectrogram, plot_spatial_spectrogram_interval, compute_fk_spectrum
 from models.Event_analyzer              import analyze_event_dynamics 
-from models.Feature_extraction_ML       import extract_csd_vector
+from models.Feature_extraction_ML       import extract_csd_matrix
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
 from models.PCA                         import fit_pca, transform_pca, get_explained_variance, plot_explained_variance
 from datetime                           import datetime
@@ -108,6 +108,7 @@ print_update(f"Step 1 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
 # Step 2. Single station analysis
+
 start = time.time()
 print_header('Data Treatment')
 
@@ -141,7 +142,8 @@ st_monitor.filter("bandpass", freqmin=band_freq[0], freqmax=band_freq[1], corner
 # show_sort_plot(st_monitor)  # Uncomment to plot filtered data
 
 #print_update('Normalize data')
-#stream     = ram_normalization(stream, window_norm)
+
+#stream = ram_normalization(stream, window_norm)
 #st_monitor = ram_normalization(st_monitor, window_norm)
 
 # show_sort_plot(st_monitor_normalized)  # Uncomment to print normalized data
@@ -150,6 +152,7 @@ print_update(f"Step 2 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
 # Step 3. Analysis in Frequency Spectrum
+
 start = time.time()
 print_header('Generating spectrograms for selected channels') 
 
@@ -164,6 +167,7 @@ for i in range(len(select)):
 print_update(f"Step 3 completed in {time.time() - start:.2f} seconds")
 #############################################################################################
 # Step 4. Spatial spectrum analysis
+
 start = time.time()
 print_header('Generating spatial spectrogram for all channels')
 
@@ -186,6 +190,7 @@ print_update(f"Step 4 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
 # Step 5. Analyze Event to get amplitude
+
 print_header('Analyzing Event Signal')
 
 start = time.time()
@@ -197,6 +202,7 @@ print_update(f"Step 5 completed in {time.time() - start:.2f} seconds")
 
 #############################################################################################
 # Step 6. Feature Extraction of Data Set
+
 start = time.time()
 
 # Extract the date part from start_time
@@ -218,7 +224,9 @@ window_end = int(frequency_sample * 19800)
 data_matrix = data_matrix[:, window_start:window_end]
 
 # Extract features (CSDM)
-csd_feature_vector = extract_csd_vector(data_matrix, fs=frequency_sample)
+csd_feature_vector = extract_csd_matrix(data_matrix, fs=frequency_sample)
+
+print("Cross Spectral Density Matrix has dimensions:", csd_feature_vector.shape)
 
 # Save CSDM features to a file
 csd_feature_file_path = os.path.join(output_folder_features, f"csd_features_{date_str}.npy")
@@ -234,18 +242,17 @@ print(f"Total execution time: {execution_time:.2f} seconds")
 
 #############################################################################################
 # Step 7. Apply PCA and then Logistic Regression
+
 print_header('Applying PCA + Logistic Regression')
 
 start = time.time()
 
 #i need to do a train test split
 
-# Suppose X is your (n_samples, n_features) matrix from extract_csd_vector
-X_reduced = fit_pca(csd_feature_vector, variance_threshold=0.95)  # auto-select components for 95% variance
+# Suppose X is your (n_samples, n_features) matrix from extract_csd_matrix
+csd_feature_reduced = fit_pca(csd_feature_vector, variance_threshold=0.95)  # auto-select components for x% variance
 
-print("Explained variance ratios:", get_explained_variance())
-
-plot_explained_variance()  # visualizes individual + cumulative variance
+print(csd_feature_reduced)
 
 # Later on, transform new samples with the same PCA
 # X_new_reduced = transform_pca(X_new)

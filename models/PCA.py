@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 _scaler = None
 _pca = None
 
-def fit_pca(features, n_components=None, variance_threshold=0.95):
+def fit_pca(features, n_components=None, variance_threshold=None):
     """
     Fit PCA on features, either with a fixed number of components or
     choosing components to explain at least variance_threshold of variance.

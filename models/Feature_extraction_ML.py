@@ -108,22 +108,25 @@ def extract_spectrogram_features(Sxx, freqs, times, n_bands=20):
 
     return features
 
-def extract_csd_vector(multichannel_data, fs, nperseg=256, noverlap=128, max_freq_bins=10):
-    n_channels, n_samples = multichannel_data.shape
-    f, _ = welch(multichannel_data[0], fs=fs, nperseg=nperseg)
+def extract_csd_matrix(multichannel_data, fs, nperseg=256, noverlap=128, max_freq_bins=10):
 
+    n_channels, n_samples = multichannel_data.shape
+    f, _ = csd(multichannel_data[0], multichannel_data[0], fs=fs, nperseg=nperseg)
+    
     # Choose evenly spaced frequency bin indices
     freq_indices = np.linspace(0, len(f) - 1, max_freq_bins, dtype=int)
 
     # Compute full CSD matrix for all frequency bins
-    csd_matrix = np.zeros((n_channels, n_channels, len(f)), dtype=np.complex128)
-    for i in range(n_channels):
-        for j in range(i, n_channels):
-            _, Pxy = csd(multichannel_data[i], multichannel_data[j], fs=fs,
-                         nperseg=nperseg, noverlap=noverlap)
-            csd_matrix[i, j, :] = Pxy
-            if i != j:
-                csd_matrix[j, i, :] = np.conj(Pxy)
+    csd_matrices = []
+    for k in freq_indices:
+        C = np.zeros((n_channels, n_channels), dtype=np.complex128)
+        for i in range(n_channels):
+            for j in range(i, n_channels):
+                _, Pxy = csd(multichannel_data[i], multichannel_data[j], fs=fs,
+                             nperseg=nperseg, noverlap=noverlap)
+                C[i, j] = Pxy[k]
+                if i != j:
+                    C[j, i] = np.conj(Pxy[k])
+        csd_matrices.append(np.abs(C.flatten()))  # Use magnitude
 
-    # Flatten selected frequency bins into a single 1D vector
-    return np.concatenate([csd_matrix[:, :, k].flatten() for k in freq_indices])
+    return np.array(csd_matrices)  # Shape: (freq_bins, n_channels * n_channels)

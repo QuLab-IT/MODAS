@@ -17,6 +17,7 @@ from models.Event_analyzer              import analyze_event_dynamics
 from models.Feature_extraction_ML       import extract_csd_matrix
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
 from models.PCA                         import fit_pca, transform_pca, get_explained_variance, plot_explained_variance
+from models.Feature_treatment           import VQVAEFeatureProcessor
 from datetime                           import datetime
 
 #############################################################################################
@@ -241,23 +242,39 @@ execution_time = end - start
 print(f"Total execution time: {execution_time:.2f} seconds")
 
 #############################################################################################
-# Step 7. Apply PCA and then Logistic Regression
+# Step 7. Apply Feature Treatment
 
-print_header('Applying PCA + Logistic Regression')
+print_header('Step 7: Feature Extraction with VQ-VAE and PCA')
 
 start = time.time()
 
-#i need to do a train test split
+# Instantiate processor
+vqvae_processor = VQVAEFeatureProcessor()
 
-# Suppose X is your (n_samples, n_features) matrix from extract_csd_matrix
-csd_feature_reduced = fit_pca(csd_feature_vector, variance_threshold=0.95)  # auto-select components for x% variance
+# Apply VQ-VAE to your CSDM feature vector
+reconstructed_patches = vqvae_processor.process(csd_feature_vector)
 
-print(csd_feature_reduced)
+plt.imshow(reconstructed_patches[0], cmap='hot')
+plt.title("Reconstructed VQ-VAE Patch")
+plt.colorbar()
+plt.show()
 
-# Later on, transform new samples with the same PCA
-# X_new_reduced = transform_pca(X_new)
+# Flatten each reconstructed patch into a vector
+X = np.array([patch.flatten() for patch in reconstructed_patches])
+
+# Create labels for the example (replace with actual labels if available)
+# y = np.array([...])  # For classification tasks, provide actual labels here
+
+# Split data into training and testing sets
+from sklearn.model_selection import train_test_split
+X_train, X_test = train_test_split(X, test_size=0.2, random_state=42)
+
+# Apply PCA
+X_train_pca = fit_pca(X_train, variance_threshold=0.95)
+X_test_pca  = transform_pca(X_test)
 
 print_update(f"Step 7 completed in {time.time() - start:.2f} seconds")
+
 
 #print_update('saving ASDF data')
 #write_to_h5(stream, 'DAS_SSprocess.h5')

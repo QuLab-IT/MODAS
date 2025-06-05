@@ -17,7 +17,7 @@ from models.Event_analyzer              import analyze_event_dynamics
 from models.Feature_extraction_ML       import extract_csd_matrix
 from models.Logistic_Regression         import run_logistic_regression, predict_logistic_regression
 from models.PCA                         import fit_pca, transform_pca, get_explained_variance, plot_explained_variance
-from models.Feature_treatment           import VQVAEFeatureProcessor
+# from models.Feature_treatment           import VQVAEFeatureProcessor
 from datetime                           import datetime
 
 #############################################################################################
@@ -61,7 +61,7 @@ sampling_files   = sampling_file_name(raw_data_folder)
 meas_settings    = HDAS_meas_settings( sampling_files[0] )
 n_time_samples   = meas_settings['N Time Samples']          # Determine the number of time samples
 n_channels       = int(meas_settings['N Processed'])        # Determine the number of position samples
-frequency_sample = meas_settings['Sample Frequency']        # Determine the frequency of aquisition
+frequency_sample = meas_settings['Sample Frequency']        # Determine the frequency of aquisition ver o que se passa aqui, HDAS é 200 Hz até 4000
 spatial_sample   = meas_settings['Spatial Sampling']        # Determine the lenght separation
 offset           = meas_settings['Pos Offset']              # Determine the lenght offset
 
